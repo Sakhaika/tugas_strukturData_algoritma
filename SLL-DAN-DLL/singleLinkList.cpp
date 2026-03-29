@@ -6,15 +6,22 @@ struct mataKuliah {
     int nilaiUts, nilaiUas, nilaiTugas;
 };
 
+struct Node {
+    mataKuliah matKul;
+    Node* next;
+};
+
 struct mahasiswa {
     long long nim;
     int semester;
     string nama, prodi;
-    mataKuliah matKul[20];
+    Node* head;
+    Node* tail;
+    int jumlahMatkul;
 };
 
-string mutuHuruf(int nilaiTugas, int nilaiUts, int nilaiUas , int jumlahMatkul){
-    float nilaiHuruf = (nilaiTugas + nilaiUts + nilaiUas) / 3;
+string mutuHuruf(int nilaiTugas, int nilaiUts, int nilaiUas){
+    float nilaiHuruf = (float)(nilaiTugas + nilaiUts + nilaiUas) / 3.0f;
     if (nilaiHuruf >= 81 && nilaiHuruf <= 100){
         return "A, Sangat Istimewah";
     } else if (nilaiHuruf <= 80.9 && nilaiHuruf >= 76){
@@ -38,39 +45,192 @@ string mutuHuruf(int nilaiTugas, int nilaiUts, int nilaiUas , int jumlahMatkul){
     }
 }
 
-void inputMatkul(mahasiswa &mhs, int jumlahMatkul){
-    for (int i = 0; i < jumlahMatkul; i++){
-        cout << "Masukan mata kuliah ke-" << i + 1 << endl;
-        cout << "Nama Mata kuliah: ";
-        cin >> mhs.matKul[i].namaMatkul;
-        cout << "Masukan nilai tugas: ";
-        cin >> mhs.matKul[i].nilaiTugas;
-        cout << "Masukan nilai UTS: ";
-        cin >> mhs.matKul[i].nilaiUts;
-        cout << "Masukan nilai UAS: ";
-        cin >> mhs.matKul[i].nilaiUas;
-        cout << endl;
+Node* buatNode(mataKuliah mk) {
+    Node* baru = new Node;
+    baru->matKul = mk;
+    baru->next   = nullptr;
+    return baru;
+}
+
+void inisialisasi(mahasiswa &mhs) {
+    mhs.head         = nullptr;
+    mhs.tail         = nullptr;
+    mhs.jumlahMatkul = 0;
+}
+
+bool kosong(mahasiswa &mhs) {
+    return mhs.head == nullptr;
+}
+
+mataKuliah inputSatuMatkul(int ke){
+    mataKuliah mk;
+    cout << "\n Mata Kuliah ke-" << ke << endl;
+    cout << "Nama Mata Kuliah: ";
+    cin.ignore();
+    getline(cin, mk.namaMatkul);
+    cout << "Nilai Tugas: ";
+    cin >> mk.nilaiTugas;
+    cout << "Nilai UTS: ";
+    cin >> mk.nilaiUts;
+    cout << "Nilai UAS: ";
+    cin >> mk.nilaiUas;
+    return mk;
+}
+
+void tampilkanSatuMatkul(mataKuliah mk, int ke){
+    cout << "\n Mata Kuliah ke-" << ke << endl;
+    cout << "Nama Mata Kuliah: " << mk.namaMatkul << endl;
+    cout << "Nilai Tugas: " << mk.nilaiTugas << endl;
+    cout << "Nilai UTS: " << mk.nilaiUts << endl;
+    cout << "Nilai UAS: " << mk.nilaiUas << endl;
+    cout << "Mutu Huruf: " << mutuHuruf(mk.nilaiTugas, mk.nilaiUts, mk.nilaiUas) << endl;
+}
+
+void tampilkanSemuaMatkul(mahasiswa &mhs) {
+    if (kosong(mhs)) {
+        cout << "Belum ada mata kuliah yang diinput.\n";
+        return;
+    }
+    Node* curr = mhs.head;
+    int ke = 1;
+    cout << "\n========== Data Mata Kuliah ==========\n";
+    while (curr != nullptr) {
+        tampilkanSatuMatkul(curr->matKul, ke);
+        curr = curr->next;
+        ke++;
     }
 }
 
-void outputMatkul(mahasiswa &mhs, int jumlahMatkul){
-    for (int i = 0; i < jumlahMatkul; i++){
-        cout << "Data mata kuliah ke-" << i + 1 << endl;
-        cout << "Nama mata kuliah: " << mhs.matKul[i].namaMatkul << endl;
-        cout << "Nilai tugas: " << mhs.matKul[i].nilaiTugas << endl ;
-        cout << "Nilai UTS: " << mhs.matKul[i].nilaiUts << endl;
-        cout << "Nilai UAS: " << mhs.matKul[i].nilaiUas << endl;
-        cout << "Mutu huruf mata kuliah: " << mutuHuruf(mhs.matKul[i].nilaiTugas, mhs.matKul[i].nilaiUts, mhs.matKul[i].nilaiUas, jumlahMatkul) << endl;
-        cout << endl;
+void tambahDepan(mahasiswa &mhs) {
+    mataKuliah mk   = inputSatuMatkul(mhs.jumlahMatkul + 1);
+    Node*      baru = buatNode(mk);
+ 
+    if (kosong(mhs)) {
+        mhs.head = baru;
+        mhs.tail = baru;
+    } else {
+        baru->next = mhs.head;
+        mhs.head   = baru;
     }
+    mhs.jumlahMatkul++;
+    cout << "  [OK] Mata kuliah berhasil ditambahkan di depan.\n";
 }
+
+void tambahBelakang(mahasiswa &mhs) {
+    mataKuliah mk   = inputSatuMatkul(mhs.jumlahMatkul + 1);
+    Node*      baru = buatNode(mk);
+ 
+    if (kosong(mhs)) {
+        mhs.head = baru;
+        mhs.tail = baru;
+    } else {
+        mhs.tail->next = baru;
+        mhs.tail       = baru;
+    }
+    mhs.jumlahMatkul++;
+    cout << "  [OK] Mata kuliah berhasil ditambahkan di belakang.\n";
+}
+
+void tambahTengah(mahasiswa &mhs) {
+    if (mhs.jumlahMatkul < 2) {
+        cout << ">> List terlalu pendek untuk tambah tengah. Gunakan tambah depan/belakang.\n";
+        return;
+    }
+
+    int posisi;
+    cout << "\n[+] Tambah Mata Kuliah di TENGAH\n";
+    cout << "    Tambah setelah posisi ke- (1 s/d " << mhs.jumlahMatkul - 1 << "): ";
+    cin >> posisi;
+
+    if (posisi < 1 || posisi >= mhs.jumlahMatkul) {
+        cout << ">> Posisi tidak valid!\n";
+        return;
+    }
+
+    mataKuliah mk   = inputSatuMatkul(mhs.jumlahMatkul + 1);
+    Node*      baru = buatNode(mk);
+
+    Node* curr = mhs.head;
+    for (int i = 1; i < posisi; i++) curr = curr->next;
+
+    baru->next = curr->next;
+    curr->next = baru;
+
+    if (baru->next == nullptr) mhs.tail = baru;
+    mhs.jumlahMatkul++;
+    cout << "  [OK] Mata kuliah berhasil ditambahkan di posisi ke-" << posisi + 1 << ".\n";
+}
+
+void hapusDepan(mahasiswa &mhs) {
+     if (kosong(mhs)) {
+        cout << ">> Tidak ada mata kuliah untuk dihapus!\n";
+        return;
+    }
+    Node* hapus = mhs.head;
+    mhs.head = mhs.head->next;
+    cout << ">> Matkul \"" << hapus->matKul.namaMatkul << "\" berhasil dihapus dari depan!\n";
+    delete hapus;
+    mhs.jumlahMatkul--;
+    if (mhs.head == nullptr) mhs.tail = nullptr;
+}
+
+void hapusBelakang(mahasiswa &mhs) {
+    if (kosong(mhs)) {
+        cout << ">> Tidak ada mata kuliah untuk dihapus!\n";
+        return;
+    }
+
+    if (mhs.head->next == nullptr) {
+        cout << ">> Matkul \"" << mhs.head->matKul.namaMatkul << "\" berhasil dihapus dari belakang!\n";
+        delete mhs.head;
+        mhs.head = nullptr;
+        mhs.tail = nullptr;
+        mhs.jumlahMatkul--;
+        return;
+    }
+
+    Node* curr = mhs.head;
+    while (curr->next->next != nullptr) curr = curr->next;
+
+    cout << ">> Matkul \"" << curr->next->matKul.namaMatkul << "\" berhasil dihapus dari belakang!\n";
+    delete curr->next;
+    curr->next = nullptr;
+    mhs.tail = curr; 
+    mhs.jumlahMatkul--;
+}
+
+void hapusTengah(mahasiswa &mhs) {
+    if (mhs.jumlahMatkul < 3) {
+        cout << ">> List terlalu pendek untuk hapus tengah. Gunakan hapus depan/belakang.\n";
+        return;
+    }
+
+    int posisi;
+    cout << "\n[+] Hapus Mata Kuliah di TENGAH\n";
+    cout << "    Hapus di posisi ke- (2 s/d " << mhs.jumlahMatkul - 1 << "): ";
+    cin >> posisi;
+
+    if (posisi < 2 || posisi > mhs.jumlahMatkul - 1) {
+        cout << ">> Posisi tidak valid!\n";
+        return;
+    }
+
+    Node* curr = mhs.head;
+    for (int i = 1; i < posisi - 1; i++) curr = curr->next;
+
+    Node* hapus = curr->next;
+    curr->next = hapus->next;
+    cout << ">> Matkul \"" << hapus->matKul.namaMatkul << "\" berhasil dihapus dari posisi ke-" << posisi << ".\n";
+    delete hapus;
+    mhs.jumlahMatkul--;
+}
+
 
 int main(){
     mahasiswa mhs;
-    int jumlahMatkul;
     cout << "Selamat Datang di Sakha Program Grade Nilai PNJ" << endl;
     cout << "Silahkan masukan nama mahasiswa: ";
-    cin >> mhs.nama;
+    getline(cin, mhs.nama);
     cout << "Silahkan masukan NIM mahasiswa: ";
     cin >> mhs.nim;
     cout << "Silahkan masukan program studi: ";
@@ -79,9 +239,41 @@ int main(){
     cin >> mhs.semester;
     
     cout << "===========================================" << endl;
+    int jumlahAwal;
     cout << "Silahkan masukan jumlah mata kuliah yang diambil mahasiswa: ";
-    cin >> jumlahMatkul;
-    inputMatkul(mhs, jumlahMatkul);
-    cout << "========== Inputan kamu ==========" << endl;
-    outputMatkul(mhs, jumlahMatkul);
+    cin >> jumlahAwal;
+    for (int i = 0; i < jumlahAwal; i++){
+        tambahBelakang(mhs);
+    }
+
+    tampilkanSemuaMatkul(mhs);
+    cout << "===========================================" << endl;
+    
+        int pilihan;
+    do {
+        cout << "\n=========== MENU OPERASI SLL ===========\n";
+        cout << "[1] Tambah mata kuliah di depan\n";
+        cout << "[2] Tambah mata kuliah di tengah\n";
+        cout << "[3] Tambah mata kuliah di belakang\n";
+        cout << "[4] Hapus mata kuliah di depan\n";
+        cout << "[5] Hapus mata kuliah di tengah\n";
+        cout << "[6] Hapus mata kuliah di belakang\n";
+        cout << "[7] Tampilkan semua mata kuliah\n";
+        cout << "[8] Keluar program\n";
+        cout << "Pilihan: ";
+        cin >> pilihan;
+ 
+        switch (pilihan) {
+            case 1: tambahDepan(mhs);    break;
+            case 2: tambahTengah(mhs);   break;
+            case 3: tambahBelakang(mhs); break;
+            case 4: hapusDepan(mhs);     break;
+            case 5: hapusTengah(mhs);    break;
+            case 6: hapusBelakang(mhs);  break;
+            case 7: tampilkanSemuaMatkul(mhs); break;
+            case 8: cout << "Terima kasih!\n"; break;
+            default: cout << "  [!] Pilihan tidak valid.\n";
+        }
+    } while (pilihan != 8);
+    return 0;
 }
